@@ -1,0 +1,15 @@
+{
+  "name": "reddit-wb-agent",
+  "description": "reddit-wb-agent marketplace",
+  "owner": {
+    "name": "skywalker"
+  },
+  "plugins": [
+    {
+      "name": "reddit-wb-agent",
+      "description": "Reddit 养号 agent：WorkBuddy 负责选帖和写评论，CLI 负责浏览和提交。stealth 浏览器、cookie 会话、熔断与配额硬门。",
+      "source": "./",
+      "version": "0.1.0"
+    }
+  ]
+}
