@@ -5,6 +5,7 @@ Handles login, cookie persistence, and session health checks.
 
 import asyncio
 import json
+import os
 from pathlib import Path
 
 # Prefer Patchright — an API-compatible, undetected patch of Playwright. Reddit
@@ -175,8 +176,20 @@ class RedditSession:
         if await self._is_logged_in():
             log.info("Session restored from cookies")
         elif auto_login:
-            log.info("Need to log in")
-            await self._login()
+            # Scripted login trips Reddit's network-security wall in the
+            # automated context (it returns a generic "incorrect password"
+            # or a 403 block page). Default to a clear error pointing at
+            # the cookie-import path; REDDIT_AUTO_LOGIN=1 opts back in.
+            if os.environ.get("REDDIT_AUTO_LOGIN"):
+                log.info("Need to log in")
+                await self._login()
+            else:
+                raise RuntimeError(
+                    "Not logged in — no valid session cookies. Export them "
+                    "from your browser (Cookie-Editor → Export JSON) into "
+                    "data/cookies.json, or set REDDIT_AUTO_LOGIN=1 to "
+                    "attempt scripted login."
+                )
 
         return self
 

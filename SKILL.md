@@ -28,8 +28,22 @@ Paths below are relative to this skill dir: `.env`, `data/subreddits.yaml`,
 The CLI auto-bootstraps on first run (creates `.venv`, installs deps +
 Chromium) — just run `./reddit-agent status` once and wait.
 
-Then ask the user for: Reddit username + password (have them edit `.env`
-themselves — never paste passwords in chat) and their **objective** (e.g.
+**Cookies BEFORE any browser command.** If `data/cookies.json` is missing,
+every browser command auto-runs a scripted username/password login that
+pops a Chrome window — and Reddit's anti-bot wall rejects it ("incorrect
+password" / network-security block). Do NOT run `login` or let the agent
+script the login. Instead:
+
+1. Have the user log in to reddit.com in their OWN browser, install the
+   Cookie-Editor extension, Export → JSON.
+2. Have them paste the JSON into `data/cookies.json` (write the file for
+   them, `chmod 600`). Cookie-Editor format is handled automatically.
+3. Verify: `./reddit-agent login-check` → `{"logged_in": true}`.
+4. On future `login-check` failures (cookie expiry ~6 months), repeat.
+
+Then ask the user for: Reddit username (for `.env` `REDDIT_USERNAME` —
+used to locate the karma profile page; `REDDIT_PASSWORD` is only a
+dormant fallback, they may leave it) and their **objective** (e.g.
 "promote my SaaS to developers", "just build karma"). No API keys needed —
 you are the LLM. Write `REDDIT_AGENT_OBJECTIVE` into `.env` for them.
 
