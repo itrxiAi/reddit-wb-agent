@@ -28,6 +28,9 @@ Python environment (requires Python 3.12+).
 | Command | What it does |
 |---|---|
 | `status` | Paused / quota / dry-run snapshot (JSON) |
+| `cycle [--threads N]` | One session: inbox + pending + karma + scan/browse/upvote all subs + candidate thread bodies |
+| `login` | Open Chrome, wait for manual login, save cookies |
+| `login-check` | Is the session logged in? |
 | `inbox` | Ban & removal notices |
 | `karma` | Account karma |
 | `scan --sub NAME` | Threads in a subreddit |
@@ -52,3 +55,23 @@ cp .env.example .env   # fill in REDDIT_USERNAME / REDDIT_PASSWORD / OBJECTIVE
 ```
 
 Keep `DRY_RUN=true` until the agent's writing has been reviewed.
+
+## Login — use cookie export, not scripted login
+
+Reddit's anti-bot wall rejects logins inside the automated browser
+(fresh profile + remote control reads as "incorrect password" or a
+network-security block page), even with correct credentials. Two paths:
+
+**Cookie export (recommended — always works):**
+
+1. Log in to reddit.com in your own everyday Chrome
+2. Install the Cookie-Editor extension, open reddit.com, Export → JSON
+3. Save the JSON as `data/cookies.json` in this folder, `chmod 600` it
+4. Verify: `./reddit-agent login-check` → `{"logged_in": true}`
+
+The `reddit_session` cookie lasts ~6 months. If `login-check` ever
+returns false, re-export.
+
+**Manual login window (fallback):** `./reddit-agent login` opens Chrome
+on the login page and waits 5 min for you to log in, then saves cookies.
+May still hit the network-security wall on flagged contexts.
