@@ -43,7 +43,7 @@ Python environment (requires Python 3.12+).
 | `pause` / `resume` | Circuit breaker |
 
 Hard gates enforced by the tool: circuit breaker, daily quota
-(`MAX_COMMENTS_PER_DAY`), thread dedup, DM dedup, `DRY_RUN`.
+(`MAX_COMMENTS_PER_DAY`), thread dedup, DM dedup.
 
 ## Setup
 
@@ -54,7 +54,8 @@ cp .env.example .env   # fill in REDDIT_USERNAME / REDDIT_PASSWORD / OBJECTIVE
 ./reddit-agent status  # first run installs .venv + Chromium automatically
 ```
 
-Keep `DRY_RUN=true` until the agent's writing has been reviewed.
+There is no dry-run flag: `submit` always posts for real, so the agent
+must show you the exact text + target and get your approval first.
 
 ## Login — use cookie export, not scripted login
 

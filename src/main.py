@@ -22,7 +22,6 @@ Commands (all read-only unless noted):
 Safety rails enforced here (the host agent does NOT police these):
   - circuit breaker: submit refuses while paused
   - daily quota: submit refuses past MAX_COMMENTS_PER_DAY
-  - dry run: DRY_RUN=true logs intent without touching Reddit
 """
 
 import argparse
@@ -209,11 +208,6 @@ async def cmd_submit_comment(config: Config, thread_url: str, text: str) -> None
         _emit(gate)
         return
 
-    if config.dry_run:
-        _emit({"success": True, "dry_run": True, "would_post": text[:200],
-               "thread_url": thread_url})
-        return
-
     from src.browser.actions import post_comment
 
     async def go(session):
@@ -235,11 +229,6 @@ async def cmd_submit_post(config: Config, sub: str, title: str, body: str) -> No
     gate = _check_gates(config)
     if gate:
         _emit(gate)
-        return
-
-    if config.dry_run:
-        _emit({"success": True, "dry_run": True,
-               "would_post": {"sub": sub, "title": title, "body": body[:200]}})
         return
 
     from src.browser.engage import create_post
@@ -345,11 +334,6 @@ async def cmd_submit_dm(config: Config, to: str, subject: str, text: str) -> Non
     gate = _check_gates(config)
     if gate:
         _emit(gate)
-        return
-
-    if config.dry_run:
-        _emit({"success": True, "dry_run": True,
-               "would_dm": {"to": to, "subject": subject, "text": text[:200]}})
         return
 
     from src.browser.dms import send_dm

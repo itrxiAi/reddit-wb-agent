@@ -134,10 +134,6 @@ class Config:
     # Paths
     ai_marketing_tracker_path: Path | None = None
 
-    # Dry run: generate + log everything but perform NO mutating actions
-    # (no posting, upvoting, DMing). Safe way to onboard a new account/objective.
-    dry_run: bool = False
-
     # Logging
     log_level: str = "INFO"
     screenshot_on_error: bool = True
@@ -247,7 +243,6 @@ def load_config() -> Config:
         reachllm_api_token=os.environ.get("REACHLLM_API_TOKEN", ""),
         subreddits=load_subreddits(),
         ai_marketing_tracker_path=Path(tracker_path) if tracker_path else None,
-        dry_run=os.environ.get("DRY_RUN", "false").lower() == "true",
         log_level=os.environ.get("LOG_LEVEL", "INFO"),
         screenshot_on_error=os.environ.get("SCREENSHOT_ON_ERROR", "true").lower()
         == "true",

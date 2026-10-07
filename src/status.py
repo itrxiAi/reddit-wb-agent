@@ -43,13 +43,10 @@ def build_status(config: Config) -> dict:
         )
     if quota_left == 0:
         alerts.append("daily comment quota reached")
-    if config.dry_run:
-        alerts.append("DRY_RUN is on — submit commands only log, nothing posts")
 
     return {
         "paused": paused.paused,
         "paused_reason": paused.reason if paused.paused else None,
-        "dry_run": config.dry_run,
         "quota_ok": quota_left > 0,
         "last_comment_at": _last_posted_iso(),
         "today": {

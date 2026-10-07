@@ -51,8 +51,11 @@ Edit `data/subreddits.yaml` for their objective: 2-3 karma-building subs
 (`min_karma: 0`, e.g. AskReddit, NoStupidQuestions) + 2-4 target subs
 (`min_karma: 20-50`).
 
-Keep `DRY_RUN=true` at first — show the user what you WOULD post, get
-approval, then set `DRY_RUN=false`.
+There is no dry-run mode. Before EVERY `submit`, show the user the
+target (thread URL / sub / recipient) and the exact text, and get an
+explicit "send it" — the approval is bound to that text and target;
+if either changes, confirm again. If you can't reach the user,
+draft the text and report it, but do not submit.
 
 ## Workflows
 
@@ -78,7 +81,9 @@ Run ONE engagement cycle — two browser passes total:
 ```
 
 Max 2 comments per run — the schedule itself provides the spacing.
-Do NOT edit `.env`, `subreddits.yaml`, or flip `DRY_RUN` on your own.
+Show each proposed comment + target and submit only after approval;
+if the user isn't reachable, report drafts instead of posting.
+Do NOT edit `.env` or `subreddits.yaml` on your own.
 
 ### Posting (manual, when user asks)
 
@@ -135,7 +140,7 @@ You must sound like a real person typing quickly on their phone:
 
 | Command | What it returns |
 |---|---|
-| `status` | paused / quota / dry_run / last comment time |
+| `status` | paused / quota / last comment time |
 | `cycle [--threads N]` | one pass: inbox + pending + karma + per-sub threads/upvotes + candidate bodies |
 | `inbox` | ban & removal notices (run before posting) |
 | `karma` | account comment karma |
