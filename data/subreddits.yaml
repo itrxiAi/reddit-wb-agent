@@ -1,0 +1,39 @@
+# Karma-building subreddits for a new account.
+# All min_karma: 0 — no posting barrier. Answer questions, be funny/helpful,
+# farm upvotes. NO promotion, NO links, NO mentions of any product.
+
+subreddits:
+  - name: AskReddit
+    keywords: [questions, stories, opinions, life]
+    max_daily_comments: 2
+    min_karma: 0
+    tone: "Casual, witty, short. Personal anecdotes and one-liners get upvoted."
+    notes: "Sort by rising/new — early comments on threads that blow up farm the most karma."
+
+  - name: NoStupidQuestions
+    keywords: [questions, how, why, help]
+    max_daily_comments: 2
+    min_karma: 0
+    tone: "Helpful, clear, patient. Simple direct answers."
+    notes: "Answer questions you actually know. Short correct answers get upvoted."
+
+  - name: explainlikeimfive
+    keywords: [explain, how, why, simple]
+    max_daily_comments: 1
+    min_karma: 0
+    tone: "Simple analogies, break things down easy."
+    notes: "Only comment on topics you can genuinely simplify."
+
+  - name: CasualConversation
+    keywords: [chat, life, day, hobby, weekend]
+    max_daily_comments: 2
+    min_karma: 0
+    tone: "Friendly, warm, conversational. Just chat like a normal person."
+    notes: "Low stakes, great for volume and natural-looking activity."
+
+  - name: todayilearned
+    keywords: [facts, interesting, learned]
+    max_daily_comments: 1
+    min_karma: 0
+    tone: "Curious, add a related fun fact or a short witty observation."
+    notes: "Related-fact comments and light jokes do well here."

@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# reddit-agent — CLI wrapper. Auto-bootstraps .venv + Chromium on first run,
+# then forwards to the Python engine. Lives inside the WorkBuddy skill dir.
+set -euo pipefail
+
+# Resolve the real script dir even when invoked through a symlink on PATH
+SOURCE="$0"
+while [ -h "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+cd "$DIR"
+
+# ─── lazy bootstrap: first run creates the venv ───
+if [ ! -x ".venv/bin/python" ]; then
+    echo "[reddit-agent] first run — setting up Python environment..." >&2
+    PYTHON=""
+    for cmd in python3.13 python3.12 python3; do
+        if command -v "$cmd" &>/dev/null; then
+            ver=$("$cmd" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>/dev/null || echo "0.0")
+            major=${ver%%.*}; minor=${ver##*.}
+            if [ "$major" -ge 3 ] && [ "$minor" -ge 12 ]; then
+                PYTHON="$cmd"; break
+            fi
+        fi
+    done
+    if [ -z "$PYTHON" ]; then
+        echo "[reddit-agent] ERROR: Python 3.12+ required (brew install python@3.13)" >&2
+        exit 1
+    fi
+    "$PYTHON" -m venv .venv
+    .venv/bin/pip install -e . --quiet
+    .venv/bin/playwright install chromium >&2
+    echo "[reddit-agent] setup complete" >&2
+fi
+
+exec .venv/bin/python -m src.main "$@"
