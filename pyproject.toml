@@ -1,6 +1,6 @@
 [project]
 name = "reddit-wb-agent"
-version = "0.1.0"
+version = "0.2.0"
 description = "Autonomous Reddit engagement agent for WorkBuddy. Two schedulable skills: posting and replying. Stealth browser, karma building, shadowban detection, learning loop."
 requires-python = ">=3.12"
 readme = "README.md"
