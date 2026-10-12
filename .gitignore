@@ -6,4 +6,5 @@ data/cookies.json
 data/cookies.json.bak
 data/reddit.db
 data/screenshots/
+data/xhs/
 .DS_Store

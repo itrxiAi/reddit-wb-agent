@@ -1,27 +1,33 @@
 # reddit-wb-agent
 
 A Reddit actuator packaged as a **WorkBuddy skill** — WorkBuddy is the brain,
-this tool is the hands.
+this tool is the hands. Now with a second skill: **小红书 (Xiaohongshu) note
+publishing** via `xhs/`.
 
 Fork of [reddit-agent](https://github.com/sohazur/reddit-agent), cut down to
 the essentials: no internal LLM pipeline, no research mode, no integrations.
 WorkBuddy reads threads and writes every comment itself; this tool browses
 Reddit in a stealth browser and submits the text it's given.
 
-## Structure — the project IS the skill
+## Structure — the project IS the skill(s)
 
-Drop this folder into `~/.workbuddy/skills/reddit-agent/`:
+Drop this folder into `~/.workbuddy/skills/reddit-agent/` — the plugin
+manifest registers two skills from it:
 
 ```
-SKILL.md          agent manual: workflows + writing rules
+SKILL.md          reddit agent manual: workflows + writing rules
 reddit-agent      CLI wrapper — auto-creates .venv + Chromium on first run
-src/              engine (browser, scanner, safety, db)
-data/             subreddits.yaml + runtime state (cookies, reddit.db)
-.env              Reddit credentials + limits (create from .env.example)
+xhs/              the 小红书 skill
+  SKILL.md        xhs agent manual: publish workflow + 笔记 writing rules
+  xhs-agent       CLI wrapper — shares the root .venv + engine
+src/              engine (browser, scanner, safety, db) + src/xhs/ (XHS)
+data/             subreddits.yaml + runtime state (cookies, reddit.db, xhs/)
+.env              credentials + limits for both agents (see .env.example)
 ```
 
-No install script needed — the first `./reddit-agent status` bootstraps the
-Python environment (requires Python 3.12+).
+No install script needed — the first `./reddit-agent status` or
+`./xhs/xhs-agent status` bootstraps the Python environment
+(requires Python 3.12+). Both CLIs share the same `.venv`.
 
 ## Commands
 
@@ -76,3 +82,27 @@ returns false, re-export.
 **Manual login window (fallback):** `./reddit-agent login` opens Chrome
 on the login page and waits 5 min for you to log in, then saves cookies.
 May still hit the network-security wall on flagged contexts.
+
+## xhs-agent — 小红书 publishing
+
+Second skill living in `xhs/` — same "you are the brain" contract, pointed at
+the creator platform (`creator.xiaohongshu.com/publish/publish`). Publishes
+图文 and 视频 notes end-to-end: tab switch → media upload → title/body/topics
+→ shadow-DOM 发布 button.
+
+```bash
+cd xhs/
+./xhs-agent login          # Chrome opens → scan QR with 小红书 app → cookies saved
+./xhs-agent login-check    # {"logged_in": true}
+./xhs-agent publish image --title "标题(≤20字)" --content-file body.txt \
+    --images cover.jpg p2.jpg --tags 短剧 AI教程
+./xhs-agent publish video --title "..." --video clip.mp4
+./xhs-agent notes          # recent notes from 笔记管理
+./xhs-agent status         # paused / quota / last note (local, instant)
+```
+
+Hard gates mirror the reddit side (separate state under `data/xhs/`):
+`XHS_MAX_NOTES_PER_DAY`, `XHS_MIN_NOTE_INTERVAL_MINUTES`, paused flag, and
+platform limits (title ≤20 chars, body ≤1000 chars, ≤18 images, no GIF)
+validated locally before the browser opens. `publish` always posts for real —
+show the user the exact title/body/media/tags and get approval first.

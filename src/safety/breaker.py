@@ -12,6 +12,7 @@ so it survives process restarts and is visible to the status command.
 import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from pathlib import Path
 
 from src.config import DATA_DIR
 from src.log import get_logger
@@ -36,40 +37,40 @@ class PausedState:
     since: str = ""
 
 
-def is_paused() -> bool:
+def is_paused(flag: Path = PAUSED_FLAG) -> bool:
     """True if the global breaker is currently tripped."""
-    return PAUSED_FLAG.exists()
+    return flag.exists()
 
 
-def get_state() -> PausedState:
+def get_state(flag: Path = PAUSED_FLAG) -> PausedState:
     """Read the current paused state (reason + timestamp)."""
-    if not PAUSED_FLAG.exists():
+    if not flag.exists():
         return PausedState(paused=False)
     try:
-        data = json.loads(PAUSED_FLAG.read_text())
+        data = json.loads(flag.read_text())
         return PausedState(paused=True, reason=data.get("reason", ""),
                            since=data.get("since", ""))
     except Exception:
         return PausedState(paused=True, reason="unknown", since="")
 
 
-def trip(reason: str) -> None:
+def trip(reason: str, flag: Path = PAUSED_FLAG) -> None:
     """Trip the breaker: write the PAUSED flag with a reason."""
-    PAUSED_FLAG.parent.mkdir(parents=True, exist_ok=True)
-    PAUSED_FLAG.write_text(json.dumps({
+    flag.parent.mkdir(parents=True, exist_ok=True)
+    flag.write_text(json.dumps({
         "reason": reason,
         "since": datetime.now(timezone.utc).isoformat(),
     }))
     log.warning(f"CIRCUIT BREAKER TRIPPED — all posting paused: {reason}")
 
 
-def clear() -> bool:
+def clear(flag: Path = PAUSED_FLAG) -> bool:
     """Clear the breaker (the `reddit-agent --resume` action).
 
     Returns True if a flag was cleared, False if nothing was paused.
     """
-    if PAUSED_FLAG.exists():
-        PAUSED_FLAG.unlink()
+    if flag.exists():
+        flag.unlink()
         log.info("Circuit breaker cleared — posting resumed")
         return True
     return False

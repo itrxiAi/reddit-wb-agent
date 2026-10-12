@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# xhs-agent — CLI wrapper for the Xiaohongshu (小红书) publishing skill.
+# Lives in <plugin>/xhs/; the Python engine + shared .venv live at the plugin
+# root one level up. Auto-bootstraps on first run like reddit-agent does.
+set -euo pipefail
+
+# Resolve the real script dir even when invoked through a symlink on PATH
+SOURCE="$0"
+while [ -h "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+
+# The skill dir is <plugin>/xhs — the engine and venv are at the plugin root.
+ROOT="$(cd -P "$DIR/.." && pwd)"
+cd "$ROOT"
+
+# ─── lazy bootstrap: first run creates the venv ───
+if [ ! -x ".venv/bin/python" ]; then
+    echo "[xhs-agent] first run — setting up Python environment..." >&2
+    PYTHON=""
+    for cmd in python3.13 python3.12 python3; do
+        if command -v "$cmd" &>/dev/null; then
+            ver=$("$cmd" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>/dev/null || echo "0.0")
+            major=${ver%%.*}; minor=${ver##*.}
+            if [ "$major" -ge 3 ] && [ "$minor" -ge 12 ]; then
+                PYTHON="$cmd"; break
+            fi
+        fi
+    done
+    if [ -z "$PYTHON" ]; then
+        echo "[xhs-agent] ERROR: Python 3.12+ required (brew install python@3.13)" >&2
+        exit 1
+    fi
+    "$PYTHON" -m venv .venv
+    .venv/bin/pip install -e . --quiet
+    .venv/bin/playwright install chromium >&2
+    echo "[xhs-agent] setup complete" >&2
+fi
+
+exec .venv/bin/python -m src.xhs.main "$@"

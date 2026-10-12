@@ -29,6 +29,7 @@ dev = [
 
 [project.scripts]
 reddit-agent = "src.main:cli"
+xhs-agent = "src.xhs.main:cli"
 
 [project.urls]
 Homepage = "https://github.com/sohazur/reddit-agent"
