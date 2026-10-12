@@ -9,11 +9,11 @@ giving up:
   input is gone and later images go to a hidden `input[type=file][multiple]`.
 - Images upload ONE at a time — the order IS the note order; the page renders
   the progress counter as "N/18" text. GIF is rejected by XHS.
-- Title: `input[placeholder*=标题]`, 20 chars — set via the native value
-  setter + input event (fill() has landed text in the wrong field before).
-- Body: `.tiptap.ProseMirror` — execCommand('insertText') per line,
-  insertParagraph between lines.
-- Topic: insertText(' #tag') → suggestion list `div.item` (`.name`) → click
+- Title/body/topic text is typed with real keystrokes (human_type) — bulk
+  execCommand injection produces input events with zero keystroke dynamics,
+  a behavioral tell on a signature-gated, risk-controlled platform. Enter
+  per line creates the paragraph break.
+- Topic: type ' #tag' → suggestion list `div.item` (`.name`) → click
   the exact match → becomes `a.tiptap-topic`. Enter key is unreliable.
 - Publish: `<xhs-publish-btn>` carries `submit-text`/`submit-disabled`
   attributes (reliable enable signal). Its buttons live in a CLOSED shadow
@@ -27,7 +27,12 @@ import asyncio
 import sys
 import time
 
-from src.browser.stealth import human_delay, human_move
+from src.browser.stealth import (
+    human_click,
+    human_delay,
+    human_move,
+    human_type,
+)
 from src.log import get_logger
 
 log = get_logger("xhs.publish")
@@ -163,46 +168,42 @@ async def _upload_images(page, paths: list[str]) -> int:
     return await _media_count(page)
 
 
-async def _set_title(page, title: str) -> str:
-    """Set the title via the native setter + input event. Returns final value."""
-    return await page.evaluate(
-        """(t) => {
-            const el = document.querySelector('input[placeholder*=标题]');
-            if (!el) return null;
-            const setter = Object.getOwnPropertyDescriptor(
-                window.HTMLInputElement.prototype, 'value'
-            ).set;
-            setter.call(el, t);
-            el.dispatchEvent(new Event('input', {bubbles: true}));
-            el.dispatchEvent(new Event('change', {bubbles: true}));
-            return el.value;
-        }""",
-        title,
-    )
+async def _set_title(page, title: str) -> str | None:
+    """Type the title with real keystrokes. Returns the final value."""
+    el = await page.query_selector('input[placeholder*=标题]')
+    if not el:
+        return None
+    await human_click(page, el)
+    # select() so a retry replaces whatever landed the first time.
+    await el.evaluate("e => e.select()")
+    await human_type(page, title)
+    return await el.evaluate("e => e.value")
 
 
 async def _set_body(page, content: str) -> int:
-    """Type the body into the tiptap editor, one paragraph per line.
+    """Type the body into the tiptap editor with real keystrokes.
 
-    Returns the rendered character count so the caller can sanity-check.
+    '\n' arrives as Enter, which the editor turns into a paragraph break.
+    Returns the rendered character count (-1 if the editor is missing).
     """
-    lines = content.split("\n")
+    ed = await page.query_selector(_EDITOR_SEL)
+    if not ed:
+        return -1
+    await human_click(page, ed)
+    await page.evaluate(
+        """() => {
+            document.execCommand('selectAll');
+            document.execCommand('delete');
+        }"""
+    )
+    await human_type(page, content)
     return await page.evaluate(
-        """(lines) => {
+        """() => {
             const ed = document.querySelector(
                 '.tiptap.ProseMirror, .ql-editor, div[contenteditable="true"]'
             );
-            if (!ed) return -1;
-            ed.focus();
-            document.execCommand('selectAll');
-            document.execCommand('delete');
-            lines.forEach((line, i) => {
-                if (i > 0) document.execCommand('insertParagraph');
-                if (line) document.execCommand('insertText', false, line);
-            });
-            return (ed.innerText || '').length;
-        }""",
-        lines,
+            return ed ? (ed.innerText || '').length : -1;
+        }"""
     )
 
 
@@ -225,23 +226,18 @@ async def _add_topic(page, tag: str, timeout_s: float = 30) -> bool:
     7-20s while the page's own script stalls; keep polling.
     """
     before = await _topic_count(page)
-    inserted = await page.evaluate(
-        """(tag) => {
-            const ed = document.querySelector(
-                '.tiptap.ProseMirror, .ql-editor, div[contenteditable="true"]'
-            );
-            if (!ed) return false;
+    ed = await page.query_selector(_EDITOR_SEL)
+    if not ed:
+        return False
+    await ed.evaluate(
+        """(ed) => {
             ed.focus();
             const sel = window.getSelection();
             sel.selectAllChildren(ed);
             sel.collapseToEnd();
-            document.execCommand('insertText', false, ' #' + tag);
-            return true;
-        }""",
-        tag,
+        }"""
     )
-    if not inserted:
-        return False
+    await human_type(page, " #" + tag)
 
     deadline = time.time() + timeout_s
     while time.time() < deadline:

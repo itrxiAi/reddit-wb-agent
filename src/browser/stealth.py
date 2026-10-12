@@ -240,5 +240,5 @@ async def human_type(page, text: str) -> None:
             await asyncio.sleep(random.uniform(0.1, 0.3))
         await page.keyboard.type(ch, delay=human_typing_delay() * 1000)
         # Occasional longer pause between words/sentences.
-        if ch in " .,!?" and random.random() < 0.08:
+        if ch in " .,!?,。!?;、:" and random.random() < 0.08:
             await asyncio.sleep(random.uniform(0.3, 0.9))
