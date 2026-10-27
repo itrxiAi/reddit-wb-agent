@@ -1,7 +1,7 @@
 {
   "name": "reddit-wb-agent",
-  "version": "0.2.0",
-  "description": "Reddit 养号 agent：WorkBuddy 负责选帖和写评论，CLI 负责浏览和提交。stealth 浏览器、cookie 会话、熔断与配额硬门。",
+  "version": "0.3.0",
+  "description": "社媒 agent：WorkBuddy 负责选内容和写文案，CLI 负责浏览和提交。Reddit 养号评论、小红书发笔记、Pinterest 发 pin；stealth 浏览器、cookie 会话、熔断与配额硬门。",
   "author": {
     "name": "skywalker"
   },
@@ -14,6 +14,7 @@
   ],
   "skills": [
     "./",
-    "./xhs"
+    "./xhs",
+    "./pinterest"
   ]
 }

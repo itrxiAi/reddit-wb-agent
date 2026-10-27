@@ -196,7 +196,12 @@ async def human_move(page, x: float, y: float) -> None:
 
 
 async def human_click(page, element) -> None:
-    """Move to a random point inside the element, then click via real mouse."""
+    """Move to a random point inside the element, then click via real mouse.
+
+    A raw mouse click lands on whatever is topmost at that point — JS
+    clicks don't care about hit targets, real ones do. If our element is
+    covered (sticky header, overlay, dropdown), fall back to Playwright's
+    click — it re-checks actionability instead of misclicking the cover."""
     bbox = await element.bounding_box()
     if not bbox:
         await element.click()
@@ -204,7 +209,17 @@ async def human_click(page, element) -> None:
     x = bbox["x"] + bbox["width"] * random.uniform(0.25, 0.75)
     y = bbox["y"] + bbox["height"] * random.uniform(0.25, 0.75)
     await human_move(page, x, y)
-    await page.mouse.click(x, y)
+    covered = await element.evaluate(
+        """(e, pt) => {
+            const t = document.elementFromPoint(pt[0], pt[1]);
+            return !!t && !(e === t || e.contains(t));
+        }""",
+        [x, y],
+    )
+    if covered:
+        await element.click()
+    else:
+        await page.mouse.click(x, y)
 
 
 async def human_scroll(page, delta: int | None = None) -> None:
